@@ -11,7 +11,12 @@ import SwiftUI
 struct DatingAppApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                OnboardingView()
+                    .preferredColorScheme(.dark)
+            }
         }
     }
 }
+
+
