@@ -14,7 +14,6 @@ struct LoginView: View {
     @State private var rememberMe = false
     @State private var showPassword = false
     @FocusState private var focus: Field?
-
     enum Field { case email, password }
 
     var body: some View {
@@ -32,18 +31,20 @@ struct LoginView: View {
 
                     Text("Create your account and find meaningful connections")
                         .font(Style.FontStyle.subtitle)
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.white.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Style.Spacing.xl)
                 }
                 .padding(.top, 60)
 
-                // Underlined fields (no glass boxes)
+                // Underlined fields
                 VStack(spacing: Style.Spacing.l) {
-                    UnderlineTextField(
+
+                    UnderlineField(
                         placeholder: "Enter your email",
                         text: $email,
-                        isFocused: focus == .email
+                        isFocused: focus == .email,
+                        trailingDot: true
                     )
                     .keyboardType(.emailAddress)
                     .textContentType(.emailAddress)
@@ -73,6 +74,7 @@ struct LoginView: View {
                     .autocorrectionDisabled(true)
                     .focused($focus, equals: .password)
 
+                    // Remember / Forgot
                     HStack(spacing: 12) {
                         Toggle(isOn: $rememberMe) {
                             Text("Remember me")
@@ -95,24 +97,34 @@ struct LoginView: View {
                 }
                 .padding(.horizontal, Style.Spacing.xl)
 
-                // Main CTA
-                FigmaPrimaryButton(title: "Log in into Aya", icon: "chevron.right") {
+                // Big italic CTA as text-like button
+                Button {
                     // validate & sign in
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Log in into Aya")
+                            .font(.system(size: 28, weight: .regular, design: .rounded).italic())
+                            .foregroundStyle(.white)
+                        Image(systemName: "chevron.right")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .offset(y: -1)
+                    }
                 }
-                .padding(.horizontal, Style.Spacing.xl)
+                .buttonStyle(.plain)
                 .padding(.top, 8)
 
                 // Social (outlined capsules)
                 VStack(spacing: Style.Spacing.m) {
                     OutlinedSocialButton(
                         title: "Log in with Facebook",
-                        systemIcon: "f.circle.fill" // swap with real asset when you add it
+                        brandLetter: "f"
                     ) {
                         // facebook sign-in
                     }
                     OutlinedSocialButton(
                         title: "Log in with Google",
-                        systemIcon: "g.circle.fill" // swap with real asset when you add it
+                        brandLetter: "G"
                     ) {
                         // google sign-in
                     }
@@ -122,7 +134,7 @@ struct LoginView: View {
                 // Footer
                 HStack(spacing: 6) {
                     Text("Don’t have an account?")
-                        .foregroundStyle(.white.opacity(0.85))
+                        .foregroundStyle(.white.opacity(0.9))
                         .font(Style.FontStyle.caption)
                     Button {
                         // navigate to sign-up
@@ -151,19 +163,29 @@ struct LoginView: View {
     }
 }
 
-// MARK: - Underline fields
+// MARK: - Underline components
 
-private struct UnderlineTextField: View {
+private struct UnderlineField: View {
     var placeholder: String
     @Binding var text: String
     var isFocused: Bool
+    var trailingDot: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField(placeholder, text: $text)
-                .foregroundStyle(.white)
-                .tint(.white)
-                .placeholderStyle()
+            HStack(spacing: 8) {
+                TextField(placeholder, text: $text)
+                    .foregroundStyle(.white)
+                    .tint(.white)
+                    .placeholderStyle()
+                if trailingDot {
+                    Circle()
+                        .fill(Color.white.opacity(0.8))
+                        .frame(width: 3, height: 3)
+                        .padding(.trailing, 2)
+                        .accessibilityHidden(true)
+                }
+            }
             DatingApp.underline(isFocused: isFocused)
         }
     }
@@ -200,28 +222,36 @@ private struct UnderlineSecureField<Trailing: View>: View {
 @ViewBuilder
 private func underline(isFocused: Bool) -> some View {
     Rectangle()
-        .fill(Color.white.opacity(isFocused ? 0.85 : 0.6))
+        .fill(Color.white.opacity(isFocused ? 0.9 : 0.65))
         .frame(height: 1)
         .shadow(radius: isFocused ? 2 : 0)
 }
 
-// MARK: - Outlined social button
+// MARK: - Outlined social button (with brand letter in a circle)
 
 private struct OutlinedSocialButton: View {
     var title: String
-    var systemIcon: String
+    var brandLetter: String  // "f" or "G"
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: systemIcon)
-                    .font(.title3.weight(.semibold))
+            HStack(spacing: 14) {
+                Circle()
+                    .fill(Color.white.opacity(0.18))
+                    .overlay(
+                        Text(brandLetter)
+                            .font(.system(size: 22, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                    )
+                    .frame(width: 44, height: 44)
+
                 Text(title)
                     .font(Style.FontStyle.button)
+                    .foregroundStyle(.white)
+
                 Spacer()
             }
-            .foregroundStyle(.white)
             .padding(.vertical, 14)
             .padding(.horizontal, 18)
             .contentShape(Rectangle())
@@ -237,18 +267,17 @@ private struct OutlinedSocialButton: View {
     }
 }
 
-// MARK: - Small helpers
+// MARK: - Helpers
 
 private extension View {
     /// Dimmed italic placeholder look like your mock.
     func placeholderStyle() -> some View {
         self
             .font(Style.FontStyle.body.italic())
-            .foregroundStyle(.white.opacity(0.85))
+            .foregroundStyle(.white.opacity(0.9))
     }
 }
 
-// Checkbox-like toggle (same as before)
 private struct CheckboxToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 8) {
@@ -265,7 +294,6 @@ private struct CheckboxToggleStyle: ToggleStyle {
         }
     }
 }
-
 private extension ToggleStyle where Self == CheckboxToggleStyle {
     static var checkbox: CheckboxToggleStyle { CheckboxToggleStyle() }
 }
@@ -273,4 +301,5 @@ private extension ToggleStyle where Self == CheckboxToggleStyle {
 #Preview {
     LoginView()
 }
+
 
