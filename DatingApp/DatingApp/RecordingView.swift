@@ -8,15 +8,15 @@
 import SwiftUI
 import AVFoundation
 
-// MARK: - View
+// MARK: - Recording Screen
 
-struct RecordVoiceView: View {
-    @StateObject private var recorder = VoiceRecorder(durationLimit: 10)
+struct RecordingView: View {
+    @StateObject private var recorder = RecordingEngine(durationLimit: 10) // seconds
     @State private var showPermissionAlert = false
-    
+
     var body: some View {
         ZStack {
-            // Background gradient similar to your mock
+            // Background gradient
             LinearGradient(
                 colors: [
                     Color(red: 0.03, green: 0.18, blue: 0.27),
@@ -26,31 +26,31 @@ struct RecordVoiceView: View {
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
-            
+
             VStack(spacing: 24) {
                 Spacer().frame(height: 20)
-                
+
                 Text("Record Your Voice")
                     .font(.system(size: 32, weight: .thin))
                     .kerning(0.5)
                     .foregroundStyle(.white.opacity(0.95))
-                
-                Text("Share a 10-second intro about yourself. This helps others connect to your personality!")
+
+                Text("Share a short voice intro. Tap the mic to start and tap again to stop.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.white.opacity(0.8))
                     .padding(.horizontal, 28)
-                
+
                 // Timer
                 Text("\(recorder.formattedElapsed)/\(recorder.formattedLimit)")
                     .font(.system(size: 34, weight: .semibold))
                     .foregroundStyle(.white)
                     .padding(.top, 8)
-                
+
                 // Mic button
-                Button(action: {
+                Button {
                     Haptics.tap()
                     handleMicTap()
-                }) {
+                } label: {
                     ZStack {
                         Circle()
                             .fill(
@@ -71,14 +71,13 @@ struct RecordVoiceView: View {
                                     .strokeBorder(.white.opacity(0.12), lineWidth: 1)
                             )
                             .overlay(
-                                // pulsing ring while recording
                                 Circle()
                                     .stroke(lineWidth: recorder.isRecording ? 8 : 0)
                                     .foregroundStyle(.white.opacity(0.18))
                                     .scaleEffect(recorder.isRecording ? 1.12 : 1.0)
                                     .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: recorder.isRecording)
                             )
-                        
+
                         Image(systemName: recorder.isRecording ? "stop.fill" : "mic.fill")
                             .font(.system(size: 52, weight: .semibold))
                             .foregroundStyle(.white.opacity(0.9))
@@ -86,22 +85,24 @@ struct RecordVoiceView: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(recorder.isRecording ? "Stop recording" : "Start recording")
-                
+
                 Text(recorder.isRecording
                      ? "Recording… tap to stop"
-                     : "Tap the microphone to start recording! Share something about yourself!")
+                     : "Tap the microphone to start recording")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.white.opacity(0.75))
                 .padding(.horizontal, 36)
                 .padding(.top, 8)
-                
+
                 Spacer()
-                
-                // Continue button (enabled only if we have a file)
+
+                // Continue button (enabled if we have a file)
                 Button {
                     Haptics.tap()
-                    // TODO: push to the next screen; you have recorder.recordedURL
-                    print("Recorded file:", recorder.recordedURL?.path ?? "none")
+                    if let url = recorder.recordedURL {
+                        print("Recorded file: \(url.path)")
+                        // Navigate to next screen or upload using `url`
+                    }
                 } label: {
                     HStack(spacing: 6) {
                         Text("Continue")
@@ -125,16 +126,13 @@ struct RecordVoiceView: View {
         }
         .alert("Microphone Access Needed",
                isPresented: $showPermissionAlert,
-               actions: {
-            Button("OK", role: .cancel) { }
-        }, message: {
-            Text("Enable microphone access in Settings to record your intro.")
-        })
+               actions: { Button("OK", role: .cancel) {} },
+               message: { Text("Enable microphone access in Settings to record your intro.") })
         .onAppear {
-            recorder.prepareSession() // set category early for smoother first tap
+            recorder.prepareSession() // set up audio session early
         }
     }
-    
+
     private func handleMicTap() {
         switch recorder.permissionState {
         case .undetermined:
@@ -149,38 +147,29 @@ struct RecordVoiceView: View {
     }
 }
 
-// MARK: - Recorder
+// MARK: - Recording Engine
 
-final class VoiceRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
+final class RecordingEngine: NSObject, ObservableObject, AVAudioRecorderDelegate {
     enum PermissionState { case undetermined, denied, granted }
-    
+
     @Published var isRecording = false
     @Published var elapsed: TimeInterval = 0
     @Published var recordedURL: URL?
-    
+    @Published private(set) var permissionState: PermissionState = .undetermined
+
     let durationLimit: TimeInterval
     private var timer: Timer?
-    private var session = AVAudioSession.sharedInstance()
+    private let session = AVAudioSession.sharedInstance()
     private var recorder: AVAudioRecorder?
-    
-    @Published private(set) var permissionState: PermissionState = .undetermined
-    
+
     init(durationLimit: TimeInterval) {
         self.durationLimit = durationLimit
         super.init()
         refreshPermissionState()
+        observeInterruptions()
     }
-    
-    // Session & permission
-    func prepareSession() {
-        do {
-            try session.setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker, .allowBluetooth])
-            try session.setActive(true, options: .notifyOthersOnDeactivation)
-        } catch {
-            print("Audio session error:", error)
-        }
-    }
-    
+
+    // Permissions
     func refreshPermissionState() {
         switch session.recordPermission {
         case .undetermined: permissionState = .undetermined
@@ -189,7 +178,7 @@ final class VoiceRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
         @unknown default:   permissionState = .undetermined
         }
     }
-    
+
     func requestPermission(_ completion: @escaping (Bool) -> Void) {
         session.requestRecordPermission { [weak self] allowed in
             DispatchQueue.main.async {
@@ -198,12 +187,29 @@ final class VoiceRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             }
         }
     }
-    
-    // Recording
+
+    // Session setup
+    func prepareSession() {
+        do {
+            try session.setCategory(.playAndRecord, mode: .spokenAudio, options: [.defaultToSpeaker, .allowBluetooth])
+            try session.setActive(true, options: [])
+            print("Audio session ready. Route:", session.currentRoute)
+        } catch {
+            print("Audio session error:", error)
+        }
+    }
+
+    // Start/Stop
     func start() {
-        stop(clean: true) // reset if needed
+        stop(clean: true) // reset previous state
+
+        refreshPermissionState()
+        guard permissionState == .granted else {
+            print("Recording blocked: permission =", permissionState)
+            return
+        }
         prepareSession()
-        
+
         let url = Self.newFileURL()
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -211,37 +217,43 @@ final class VoiceRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
-        
+
         do {
             recorder = try AVAudioRecorder(url: url, settings: settings)
             recorder?.delegate = self
             recorder?.isMeteringEnabled = true
             recorder?.prepareToRecord()
-            // Start
-            guard recorder?.record() == true else { return }
+
+            let ok = recorder?.record() ?? false
+            if !ok {
+                print("AVAudioRecorder.record() returned false")
+                return
+            }
+
             isRecording = true
             elapsed = 0
             recordedURL = nil
-            
-            // UI timer
-            timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] t in
+
+            timer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
                 self.elapsed += 0.05
                 if self.elapsed >= self.durationLimit {
                     self.stop()
                 }
             }
+            if let timer { RunLoop.main.add(timer, forMode: .common) }
+
+            print("Recording started →", url.lastPathComponent)
         } catch {
             print("Failed to start recording:", error)
         }
     }
-    
+
     func stop(clean: Bool = false) {
         timer?.invalidate()
         timer = nil
         recorder?.stop()
         isRecording = false
-        
         if clean {
             recordedURL = nil
             elapsed = 0
@@ -249,39 +261,49 @@ final class VoiceRecorder: NSObject, ObservableObject, AVAudioRecorderDelegate {
             recordedURL = recorder?.url
         }
     }
-    
+
+    // Delegate
     func audioRecorderDidFinishRecording(_ recorder: AVAudioRecorder, successfully flag: Bool) {
         DispatchQueue.main.async {
             self.isRecording = false
             self.timer?.invalidate()
             self.timer = nil
-            if flag {
-                self.recordedURL = recorder.url
-            } else {
-                self.recordedURL = nil
+            self.recordedURL = flag ? recorder.url : nil
+            print("Recording finished:", flag, self.recordedURL?.path ?? "nil")
+        }
+    }
+
+    // Interruptions (phone call, Siri, etc.)
+    private func observeInterruptions() {
+        NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: session, queue: .main) { [weak self] note in
+            guard let self else { return }
+            guard let info = note.userInfo,
+                  let typeValue = info[AVAudioSessionInterruptionTypeKey] as? UInt,
+                  let type = AVAudioSession.InterruptionType(rawValue: typeValue) else { return }
+            if type == .began, self.isRecording {
+                self.stop()
+                print("Recording interrupted and stopped.")
             }
         }
     }
-    
-    // Utilities
+
+    // Utils
     static func newFileURL() -> URL {
-        let filename = "voice-intro-\(UUID().uuidString).m4a"
+        let name = "voice-intro-\(UUID().uuidString).m4a"
         return FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent(filename)
+            .appendingPathComponent(name)
     }
-    
+
     var formattedElapsed: String { Self.format(time: elapsed) }
     var formattedLimit: String { Self.format(time: durationLimit) }
-    
+
     static func format(time: TimeInterval) -> String {
-        let t = max(0, Int(time.rounded()))
-        let m = t / 60
-        let s = t % 60
-        return String(format: "%d:%02d", m, s)
-    }
+        let t = max(0, Int((time).rounded()))
+        return String(format: "%d:%02d", t/60, t%60)
+        }
 }
 
-// MARK: - Haptics helper
+// MARK: - Haptics
 
 enum Haptics {
     static func tap() {
@@ -293,9 +315,9 @@ enum Haptics {
 
 // MARK: - Preview
 
-struct RecordVoiceView_Previews: PreviewProvider {
+struct RecordingView_Previews: PreviewProvider {
     static var previews: some View {
-        RecordVoiceView()
+        RecordingView()
             .preferredColorScheme(.dark)
     }
 }
