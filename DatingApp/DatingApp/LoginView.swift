@@ -11,14 +11,18 @@ struct LoginView: View {
     // MARK: - State
     @State private var email: String = ""
     @State private var password: String = ""
-    @State private var showPassword = false
     @State private var rememberMe = false
+    @State private var showPassword = false
+    @FocusState private var focus: Field?
+
+    enum Field { case email, password }
 
     var body: some View {
         ZStack {
             AyaBackground(style: .pink, vignette: true)
 
             VStack(spacing: Style.Spacing.l) {
+
                 // Header
                 VStack(spacing: Style.Spacing.s) {
                     Text("Welcome to Aya")
@@ -34,43 +38,53 @@ struct LoginView: View {
                 }
                 .padding(.top, 60)
 
-                // Form (glass)
-                VStack(spacing: Style.Spacing.m) {
-                    GlassTextField(
-                        title: "Enter your email",
+                // Underlined fields (no glass boxes)
+                VStack(spacing: Style.Spacing.l) {
+                    UnderlineTextField(
+                        placeholder: "Enter your email",
                         text: $email,
-                        keyboard: .emailAddress,
-                        textContentType: .emailAddress
+                        isFocused: focus == .email
                     )
+                    .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .focused($focus, equals: .email)
 
-                    GlassSecureField(
-                        title: "Enter your password",
+                    UnderlineSecureField(
+                        placeholder: "Enter your password",
                         text: $password,
-                        isSecure: !showPassword
-                    ) {
-                        // trailing eye toggle
-                        Button {
-                            showPassword.toggle()
-                        } label: {
-                            Image(systemName: showPassword ? "eye.slash" : "eye")
-                                .font(.body.weight(.semibold))
-                                .foregroundStyle(.white.opacity(0.9))
+                        isSecure: !showPassword,
+                        isFocused: focus == .password,
+                        trailing: {
+                            Button {
+                                showPassword.toggle()
+                            } label: {
+                                Image(systemName: showPassword ? "eye.slash" : "eye")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.white.opacity(0.9))
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(showPassword ? "Hide password" : "Show password")
                         }
-                        .buttonStyle(.plain)
-                    }
+                    )
+                    .textContentType(.password)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled(true)
+                    .focused($focus, equals: .password)
 
-                    HStack {
+                    HStack(spacing: 12) {
                         Toggle(isOn: $rememberMe) {
                             Text("Remember me")
                                 .font(Style.FontStyle.caption)
-                                .foregroundStyle(.white.opacity(0.85))
+                                .foregroundStyle(.white.opacity(0.9))
                         }
                         .toggleStyle(.checkbox)
 
                         Spacer()
 
                         Button {
-                            // forgot password action
+                            // forgot password flow
                         } label: {
                             Text("Forgot password?")
                                 .font(Style.FontStyle.caption)
@@ -78,35 +92,29 @@ struct LoginView: View {
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(.top, 2)
                 }
-                .padding(Style.Spacing.l)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: Style.Radius.card, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: Style.Radius.card, style: .continuous)
-                        .stroke(Style.Palette.borderSubtle, lineWidth: 1)
-                )
                 .padding(.horizontal, Style.Spacing.xl)
 
-                // Primary CTA
+                // Main CTA
                 FigmaPrimaryButton(title: "Log in into Aya", icon: "chevron.right") {
-                    // handle login (validate email/password)
+                    // validate & sign in
                 }
                 .padding(.horizontal, Style.Spacing.xl)
+                .padding(.top, 8)
 
-                // Social logins (glass buttons)
+                // Social (outlined capsules)
                 VStack(spacing: Style.Spacing.m) {
-                    GlassWideButton(
+                    OutlinedSocialButton(
                         title: "Log in with Facebook",
-                        systemImage: "person.fill" // swap with your own FB asset if you add one
+                        systemIcon: "f.circle.fill" // swap with real asset when you add it
                     ) {
-                        // facebook login
+                        // facebook sign-in
                     }
-                    GlassWideButton(
+                    OutlinedSocialButton(
                         title: "Log in with Google",
-                        systemImage: "person.fill" // swap with Google asset
+                        systemIcon: "g.circle.fill" // swap with real asset when you add it
                     ) {
-                        // google login
+                        // google sign-in
                     }
                 }
                 .padding(.horizontal, Style.Spacing.xl)
@@ -117,7 +125,7 @@ struct LoginView: View {
                         .foregroundStyle(.white.opacity(0.85))
                         .font(Style.FontStyle.caption)
                     Button {
-                        // navigate to sign up
+                        // navigate to sign-up
                     } label: {
                         Text("Create one")
                             .font(Style.FontStyle.caption)
@@ -132,100 +140,115 @@ struct LoginView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .onTapGesture { hideKeyboard() } // dismiss keyboard on background tap
+    }
+
+    private func hideKeyboard() {
+        focus = nil
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
     }
 }
 
-// MARK: - Components (local to this file)
+// MARK: - Underline fields
 
-// TextField with glass underline style
-private struct GlassTextField: View {
-    var title: String
+private struct UnderlineTextField: View {
+    var placeholder: String
     @Binding var text: String
-    var keyboard: UIKeyboardType = .default
-    var textContentType: UITextContentType? = nil
+    var isFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            TextField(title, text: $text)
-                .keyboardType(keyboard)
-                .textContentType(textContentType)
+            TextField(placeholder, text: $text)
                 .foregroundStyle(.white)
                 .tint(.white)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled(true)
-
-            Divider()
-                .background(Color.white.opacity(0.8))
+                .placeholderStyle()
+            DatingApp.underline(isFocused: isFocused)
         }
     }
 }
 
-// Secure/Text field with trailing accessory (eye)
-private struct GlassSecureField<Trailing: View>: View {
-    var title: String
+private struct UnderlineSecureField<Trailing: View>: View {
+    var placeholder: String
     @Binding var text: String
     var isSecure: Bool
+    var isFocused: Bool
     @ViewBuilder var trailing: () -> Trailing
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack {
+            HStack(spacing: 8) {
                 if isSecure {
-                    SecureField(title, text: $text)
+                    SecureField(placeholder, text: $text)
                         .foregroundStyle(.white)
                         .tint(.white)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
+                        .placeholderStyle()
                 } else {
-                    TextField(title, text: $text)
+                    TextField(placeholder, text: $text)
                         .foregroundStyle(.white)
                         .tint(.white)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
+                        .placeholderStyle()
                 }
                 trailing()
             }
-
-            Divider()
-                .background(Color.white.opacity(0.8))
+            DatingApp.underline(isFocused: isFocused)
         }
     }
 }
 
-// Wide glass button (used for social)
-private struct GlassWideButton: View {
+@ViewBuilder
+private func underline(isFocused: Bool) -> some View {
+    Rectangle()
+        .fill(Color.white.opacity(isFocused ? 0.85 : 0.6))
+        .frame(height: 1)
+        .shadow(radius: isFocused ? 2 : 0)
+}
+
+// MARK: - Outlined social button
+
+private struct OutlinedSocialButton: View {
     var title: String
-    var systemImage: String
+    var systemIcon: String
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
-                Image(systemName: systemImage)
-                    .font(.headline)
+                Image(systemName: systemIcon)
+                    .font(.title3.weight(.semibold))
                 Text(title)
                     .font(Style.FontStyle.button)
                 Spacer()
             }
             .foregroundStyle(.white)
             .padding(.vertical, 14)
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 18)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                .fill(.ultraThinMaterial)
+            Capsule().fill(Color.white.opacity(0.06))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                .stroke(Style.Palette.glassStroke, lineWidth: 1)
+            Capsule().stroke(Color.white.opacity(0.7), lineWidth: 1)
         )
-        .shadow(color: Style.Palette.accentPink.opacity(0.25), radius: 18, x: 0, y: 8)
+        .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)
     }
 }
 
-// Checkbox-style toggle to mimic your design’s small “Remember me”
+// MARK: - Small helpers
+
+private extension View {
+    /// Dimmed italic placeholder look like your mock.
+    func placeholderStyle() -> some View {
+        self
+            .font(Style.FontStyle.body.italic())
+            .foregroundStyle(.white.opacity(0.85))
+    }
+}
+
+// Checkbox-like toggle (same as before)
 private struct CheckboxToggleStyle: ToggleStyle {
     func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 8) {
@@ -250,3 +273,4 @@ private extension ToggleStyle where Self == CheckboxToggleStyle {
 #Preview {
     LoginView()
 }
+
