@@ -9,7 +9,7 @@ import SwiftUI
 import PhotosUI
 import AVFoundation
 
-// MARK: - Profile Screen
+// MARK: - Profile Screen (full-tracks via Spotify App Remote)
 
 struct ProfileView: View {
     // Avatar
@@ -22,8 +22,7 @@ struct ProfileView: View {
 
     // Spotify
     @StateObject private var spotifyAuth = SpotifyAuth.shared
-    @StateObject private var previewPlayer = SpotifyPreviewPlayer()
-    @State private var tracks: [SpotifyTrack] = []     // only with preview_url
+    @State private var tracks: [SpotifyTrack] = []     // uses SpotifyAPI + has .uri for full play
     @State private var showSearch = false
     @State private var isLoading = false
     @State private var errorText: String?
@@ -61,7 +60,7 @@ struct ProfileView: View {
                             .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 2))
                             .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 8)
 
-                            // Small edit button → Photos picker
+                            // Edit -> Photos picker
                             PhotosPicker(selection: $selectedItem, matching: .images) {
                                 Image(systemName: "pencil.circle.fill")
                                     .font(.system(size: 28))
@@ -96,7 +95,6 @@ struct ProfileView: View {
                                     .foregroundStyle(.white.opacity(0.85))
                                 Spacer()
 
-                                // Play/Pause the latest local recording
                                 Button {
                                     voicePlayer.togglePlay()
                                 } label: {
@@ -109,7 +107,6 @@ struct ProfileView: View {
                                 .buttonStyle(.plain)
                                 .disabled(!voicePlayer.hasFile)
 
-                                // RIGHT button → open RecordingView
                                 Button {
                                     showRecorder = true
                                 } label: {
@@ -126,7 +123,7 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal, 20)
 
-                    // Spotify Section (preview-only)
+                    // Spotify Section (FULL TRACKS via App Remote)
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             HStack(spacing: 8) {
@@ -137,7 +134,7 @@ struct ProfileView: View {
                             .foregroundStyle(.white)
 
                             Spacer()
-                            Text("Preview")
+                            Text("Plays in Spotify")
                                 .font(.headline)
                                 .foregroundStyle(.white)
                         }
@@ -145,7 +142,7 @@ struct ProfileView: View {
                         GlassCard {
                             if !spotifyAuth.isAuthorized {
                                 VStack(spacing: 12) {
-                                    Text("Connect your Spotify to pick songs and play 30-second previews.")
+                                    Text("Connect your Spotify to pick songs and play full tracks (opens the Spotify app).")
                                         .multilineTextAlignment(.center)
                                         .foregroundStyle(.white.opacity(0.8))
 
@@ -155,8 +152,7 @@ struct ProfileView: View {
                                             defer { isLoading = false }
                                             do {
                                                 let token = try await spotifyAuth.ensureToken()
-                                                let top = try await SpotifyAPI.topTracks(token: token)
-                                                tracks = top.filter { $0.previewURL != nil } // only playable
+                                                tracks = try await SpotifyAPI.topTracks(token: token)
                                             } catch {
                                                 errorText = error.localizedDescription
                                             }
@@ -179,16 +175,15 @@ struct ProfileView: View {
                                             }
                                             Spacer()
                                             Button {
-                                                previewPlayer.playOrPause(track: t)
+                                                SpotifyRemote.shared.play(uri: t.uri) // full song in Spotify
                                             } label: {
-                                                Image(systemName: previewPlayer.currentlyPlayingID == t.id ? "pause.fill" : "play.fill")
+                                                Image(systemName: "play.fill")
                                                     .font(.system(size: 16, weight: .bold))
                                                     .frame(width: 40, height: 40)
                                                     .background(Circle().fill(.white.opacity(0.14)))
                                                     .foregroundStyle(.white)
                                             }
                                             .buttonStyle(.plain)
-                                            .disabled(t.previewURL == nil) // should be non-nil due to filter
                                         }
                                     }
 
@@ -217,7 +212,7 @@ struct ProfileView: View {
                 }
             }
         }
-        // Load avatar image when picked
+        // Avatar update
         .onChange(of: selectedItem) { newItem in
             Task {
                 guard let item = newItem,
@@ -226,26 +221,24 @@ struct ProfileView: View {
                 avatarUIImage = ui
             }
         }
-        // Refresh local voice file & Spotify tracks if already authorized
+        // Refresh voice intro + load top tracks if already connected
         .onAppear {
             voicePlayer.refreshLatestFile()
             Task {
                 guard spotifyAuth.isAuthorized, tracks.isEmpty else { return }
-                do {
-                    let top = try await SpotifyAPI.topTracks(token: spotifyAuth.accessToken!)
-                    tracks = top.filter { $0.previewURL != nil } // only playable items
-                } catch { errorText = error.localizedDescription }
+                do { tracks = try await SpotifyAPI.topTracks(token: spotifyAuth.accessToken!) }
+                catch { errorText = error.localizedDescription }
             }
         }
         // Sheets & alerts
         .sheet(isPresented: $showRecorder, onDismiss: { voicePlayer.refreshLatestFile() }) {
-            RecordingView() // your existing recorder screen
+            RecordingView()
         }
         .sheet(isPresented: $showSearch) {
             SpotifySearchSheet()
         }
         .onReceive(NotificationCenter.default.publisher(for: .didPickSpotifyTrack)) { note in
-            if let t = note.object as? SpotifyTrack, t.previewURL != nil, !tracks.contains(t) {
+            if let t = note.object as? SpotifyTrack, !tracks.contains(t) {
                 tracks.append(t)
             }
         }
@@ -326,7 +319,7 @@ final class VoiceIntroPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
 }
 
-// MARK: - Spotify Search Sheet (filters to preview-able tracks)
+// MARK: - Spotify Search Sheet (adds tracks; full songs play via App Remote)
 
 struct SpotifySearchSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -334,6 +327,7 @@ struct SpotifySearchSheet: View {
     @State private var query = ""
     @State private var results: [SpotifyTrack] = []
     @State private var errorText: String?
+    @FocusState private var focused: Bool
 
     var body: some View {
         NavigationStack {
@@ -341,28 +335,33 @@ struct SpotifySearchSheet: View {
                 HStack {
                     TextField("Search songs or artists", text: $query)
                         .textFieldStyle(.roundedBorder)
+                        .submitLabel(.search)
+                        .focused($focused)
+                        .onSubmit { Task { await runSearch() } }
                     Button("Search") { Task { await runSearch() } }
                 }
                 .padding()
 
-                List(results) { t in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(t.name)
-                            Text(t.artist).font(.subheadline).foregroundStyle(.secondary)
+                if results.isEmpty {
+                    Spacer()
+                    Text("Type a song/artist and press Search.")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                } else {
+                    List(results) { t in
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(t.name)
+                                Text(t.artist).font(.subheadline).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "play.fill").foregroundStyle(.secondary)
                         }
-                        Spacer()
-                        if t.previewURL != nil {
-                            Image(systemName: "waveform.circle").foregroundStyle(.secondary)
-                        } else {
-                            Text("No preview").font(.caption).foregroundStyle(.secondary)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            NotificationCenter.default.post(name: .didPickSpotifyTrack, object: t)
+                            dismiss()
                         }
-                    }
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        // Only add preview-able tracks to main list
-                        NotificationCenter.default.post(name: .didPickSpotifyTrack, object: t)
-                        dismiss()
                     }
                 }
             }
@@ -370,6 +369,7 @@ struct SpotifySearchSheet: View {
             .alert("Error", isPresented: .constant(errorText != nil), actions: {
                 Button("OK") { errorText = nil }
             }, message: { Text(errorText ?? "") })
+            .onAppear { focused = true }
         }
     }
 
@@ -378,17 +378,12 @@ struct SpotifySearchSheet: View {
         guard !q.isEmpty else { return }
         do {
             let token = try await spotifyAuth.ensureToken()
-            var found = try await SpotifyAPI.searchTracks(token: token, query: q)
-            // Keep only items with an actual preview
-            found = found.filter { $0.previewURL != nil }
-            results = found
+            results = try await SpotifyAPI.searchTracks(token: token, query: q)
         } catch { errorText = error.localizedDescription }
     }
 }
 
-extension Notification.Name {
-    static let didPickSpotifyTrack = Notification.Name("didPickSpotifyTrack")
-}
+extension Notification.Name { static let didPickSpotifyTrack = Notification.Name("didPickSpotifyTrack") }
 
 // MARK: - Preview
 
@@ -398,5 +393,6 @@ struct ProfileView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
 
 

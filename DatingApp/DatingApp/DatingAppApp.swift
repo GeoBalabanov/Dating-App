@@ -11,12 +11,13 @@ import SwiftUI
 struct DatingAppApp: App {
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-                OnboardingView()
-                    .preferredColorScheme(.dark)
-            }
+            NavigationStack { ProfileView() } // or your root
+                .onOpenURL { url in
+                    SpotifyRemote.shared.handleCallbackURL(url)
+                }
         }
     }
 }
+
 
 
