@@ -8,15 +8,15 @@
 import SwiftUI
 import AVFoundation
 
-// MARK: - Matching profile page (dummy Spotify, blurred avatar, no edit)
+// MARK: - Matching profile page (dummy Spotify, blurred avatar, no edit) + Bottom Nav
 
 struct MatchProfileView: View {
     // Dummy candidate
     private let candidate = Candidate(
         name: "Alexia",
         location: "Eindhoven, Noord Brabant",
-        avatarAsset: "alexia_photo",                       // optional asset name
-        voiceFile: AudioFileRef(name: "voice_intro", ext: "m4a") // plays if present, else simulates
+        avatarAsset: "alexia_photo",
+        voiceFile: AudioFileRef(name: "voice_intro", ext: "m4a")
     )
 
     // Dummy Spotify songs (drop files in bundle with these names to hear real audio)
@@ -33,55 +33,123 @@ struct MatchProfileView: View {
     @State private var trackProgress: [UUID: CGFloat] = [:]
 
     var body: some View {
-        ZStack {
-            AyaBackground(style: .orange, vignette: true).ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                AyaBackground(style: .orange, vignette: true).ignoresSafeArea()
 
-            ScrollView {
-                VStack(spacing: 28) {
-                    Spacer().frame(height: 36)
+                ScrollView {
+                    VStack(spacing: 28) {
+                        Spacer().frame(height: 36)
 
-                    // Avatar with soft blur overlay (no edit button)
-                    BlurredAvatar(imageName: candidate.avatarAsset, size: 200, blur: 100)
+                        // Avatar with soft blur overlay (no edit button)
+                        BlurredAvatar(imageName: candidate.avatarAsset, size: 160, blur: 6)
 
-                    // Name & location
-                    VStack(spacing: 8) {
-                        Text(candidate.name)
-                            .font(.system(size: 40, weight: .semibold, design: .rounded))
-                            .foregroundStyle(.white)
+                        // Name & location
+                        VStack(spacing: 8) {
+                            Text(candidate.name)
+                                .font(.system(size: 40, weight: .semibold, design: .rounded))
+                                .foregroundStyle(.white)
 
-                        Text(candidate.location)
-                            .font(.title3.italic())
-                            .foregroundStyle(.white.opacity(0.95))
-                    }
+                            Text(candidate.location)
+                                .font(.title3.italic())
+                                .foregroundStyle(.white.opacity(0.95))
+                        }
 
-                    // Voice Intro
-                    VStack(alignment: .leading, spacing: 14) {
-                        SectionHeader("Voice Intro")
+                        // Voice Intro
+                        VStack(alignment: .leading, spacing: 14) {
+                            SectionHeader("Voice Intro")
 
-                        GlassBar(
-                            title: voice.isPlaying ? "Playing…" : "Play Voice Intro",
-                            isPlaying: voice.isPlaying,
-                            progress: voice.progress,
-                            playTap: toggleVoice
+                            GlassBar(
+                                title: voice.isPlaying ? "Playing…" : "Play Voice Intro",
+                                isPlaying: voice.isPlaying,
+                                progress: voice.progress,
+                                playTap: toggleVoice
+                            )
+                        }
+                        .padding(.horizontal, 24)
+
+                        // Spotify card (dummy)
+                        SpotifyCardStatic(
+                            songs: songs,
+                            playingSongID: playingSongID,
+                            progress: trackProgress,
+                            playTap: toggleSong
                         )
+                        .padding(.horizontal, 24)
+
+                        Spacer(minLength: 100) // so content doesn't hide behind the bottom bar
                     }
-                    .padding(.horizontal, 24)
-
-                    // Spotify card (dummy)
-                    SpotifyCardStatic(
-                        songs: songs,
-                        playingSongID: playingSongID,
-                        progress: trackProgress,
-                        playTap: toggleSong
-                    )
-                    .padding(.horizontal, 24)
-
-                    Spacer(minLength: 40)
                 }
             }
+            .safeAreaInset(edge: .bottom) { BottomGlassyBar() }   // <- new bottom nav
+            .onDisappear { AudioStub.shared.stopAll() }
+            .preferredColorScheme(.dark)
+            .navigationBarTitleDisplayMode(.inline)
         }
-        .onDisappear { AudioStub.shared.stopAll() }
-        .preferredColorScheme(.dark)
+    }
+
+    // MARK: Bottom Nav (glassy rounded box)
+    @ViewBuilder
+    private func BottomGlassyBar() -> some View {
+        HStack(spacing: 18) {
+            // Home (placeholder)
+            Button {
+                // TODO: navigate to your Home root
+            } label: {
+                NavIcon(system: "house.fill", label: "Home")
+            }
+            .buttonStyle(.plain)
+
+            // Chat -> MessagingHomeView
+            NavigationLink {
+                MessagingHomeView()
+            } label: {
+                NavIcon(system: "bubble.left.and.bubble.right.fill", label: "Chat")
+            }
+            .buttonStyle(.plain)
+
+            // Profile (placeholder)
+            Button {
+                // TODO: navigate to profile
+            } label: {
+                NavIcon(system: "person.crop.circle", label: "Profile")
+            }
+            .buttonStyle(.plain)
+
+            // Settings (placeholder)
+            Button {
+                // TODO: navigate to settings
+            } label: {
+                NavIcon(system: "gearshape", label: "Settings")
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
+    }
+
+    private struct NavIcon: View {
+        let system: String
+        let label: String
+        var body: some View {
+            VStack(spacing: 6) {
+                Image(systemName: system)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
     }
 
     // MARK: Actions
@@ -124,7 +192,7 @@ struct MatchProfileView: View {
     }
 }
 
-// MARK: - UI Pieces
+// MARK: - UI Pieces (unchanged)
 
 private struct SectionHeader: View {
     var title: String
@@ -145,11 +213,10 @@ private struct BlurredAvatar: View {
     var body: some View {
         ZStack {
             avatar
-                .blur(radius: blur)                       // blur on photo
-                .overlay(Color.black.opacity(0.1))        // subtle dim for contrast
+                .blur(radius: blur)
+                .overlay(Color.black.opacity(0.1))
                 .clipShape(Circle())
 
-            // Slightly sharper inner layer for a nice “glow”
             avatar
                 .clipShape(Circle())
                 .scaleEffect(0.94)
@@ -232,7 +299,6 @@ private struct SpotifyCardStatic: View {
                 .shadow(color: .black.opacity(0.35), radius: 28, x: 0, y: 18)
 
             VStack(spacing: 18) {
-                // Header: Spotify | Preview
                 HStack {
                     Label {
                         Text("Spotify")
@@ -326,25 +392,22 @@ private struct SongRow: View {
 
 // MARK: - Models
 
-private struct AudioFileRef: Hashable {
+struct AudioFileRef: Hashable {
     let name: String
     let ext: String
 }
-
-private struct Candidate {
+struct Candidate {
     let name: String
     let location: String
     let avatarAsset: String?
     let voiceFile: AudioFileRef
 }
-
-private struct Song: Identifiable, Hashable {
+struct Song: Identifiable, Hashable {
     let id = UUID()
     let title: String
     let artist: String
     let file: AudioFileRef? // if nil, playback simulates
 }
-
 private struct PlayState {
     var isPlaying = false
     var progress: CGFloat = 0
@@ -374,18 +437,16 @@ private final class AudioStub {
         progressHandlers[channel] = onProgress
         finishHandlers[channel] = onFinish
 
-        // try real file first
         if let f = bundleFile,
            let url = Bundle.main.url(forResource: f.name, withExtension: f.ext),
            let p = try? AVAudioPlayer(contentsOf: url) {
 
-            // ensure audio plays even if device is muted
             try? AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try? AVAudioSession.sharedInstance().setActive(true, options: [])
 
-            players[channel] = p
             p.prepareToPlay()
             p.play()
+            players[channel] = p
 
             let t = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
                 guard let self else { timer.invalidate(); return }
@@ -398,7 +459,7 @@ private final class AudioStub {
             return
         }
 
-        // simulated progress
+        // simulated
         var elapsed: TimeInterval = 0
         onProgress(0)
         let d = max(0.01, simulatedDuration)
@@ -435,3 +496,4 @@ private final class AudioStub {
 #Preview {
     MatchProfileView()
 }
+

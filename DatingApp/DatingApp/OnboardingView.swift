@@ -29,7 +29,7 @@ struct OnboardingLandingView: View {
 
                     // Headline
                     Text("Listen. Match.\nChat. Meet.")
-                        .font(.system(size: 35, weight: .heavy, design: .rounded))
+                        .font(.system(size: 35, weight: .heavy, design: .none))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
 
@@ -46,9 +46,9 @@ struct OnboardingLandingView: View {
                     } label: {
                         HStack(spacing: 8) {
                             Text("Get Started now")
-                                .font(.system(size: 28, weight: .regular, design: .rounded).italic())
+                                .font(.system(size: 25, weight: .regular, design: .rounded).italic())
                             Image(systemName: "chevron.right")
-                                .font(.title3.weight(.semibold))
+                                .font(.title3.weight(.light))
                         }
                         .foregroundStyle(.white)
                         .padding(.horizontal, 18)
@@ -57,7 +57,7 @@ struct OnboardingLandingView: View {
                         .background(.ultraThinMaterial.opacity(0.12))
                         .clipShape(Capsule())
                         .overlay(
-                            Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1)
+                            Capsule().stroke(Color.white.opacity(0.35), lineWidth: 0)
                         )
                         .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
                     }
