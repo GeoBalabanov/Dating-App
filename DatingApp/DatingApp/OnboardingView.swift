@@ -7,104 +7,82 @@
 
 import SwiftUI
 
-struct OnboardingView: View {
-    @State private var goToLogin = false
+struct OnboardingLandingView: View {
+    @State private var goNext = false
 
     var body: some View {
-        ZStack {
-            AyaBackground(style: .pink, vignette: true)
-
-            VStack(alignment: .leading, spacing: Style.Spacing.l) {
-                Spacer()
-
-                Text("Listen. Match.\nChat. Meet.")
-                    .font(Style.FontStyle.title)
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
-
-                Text("Find love through senses. Whether you are looking for love, connection or just someone to vibe with – you are in the right place!")
-                    .font(Style.FontStyle.body)
-                    .foregroundStyle(.white.opacity(0.9))
-                    .lineSpacing(2)
-
-                FigmaPrimaryButton(title: "Get Started now", icon: "chevron.right") {
-                    goToLogin = true
-                }
-                .padding(.top, Style.Spacing.m)
-            }
-            .padding(.horizontal, Style.Spacing.xl)
-            .padding(.bottom, 32)
-        }
-        .navigationDestination(isPresented: $goToLogin) {
-            LoginView() // replace with your real login when ready
-        }
-        .preferredColorScheme(.dark)
-    }
-}
-
-/// Glassy rounded primary button to match the Figma look.
-struct FigmaPrimaryButton: View {
-    var title: String
-    var icon: String? = nil
-    var action: () -> Void
-
-    @Environment(\.isEnabled) private var isEnabled
-    @State private var pressed = false
-
-    var body: some View {
-        Button {
-            UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-            action()
-        } label: {
-            HStack(spacing: 10) {
-                Text(title)
-                    .font(Style.FontStyle.button)
-                if let icon {
-                    Image(systemName: icon)
-                        .font(Style.FontStyle.button)
-                        .symbolRenderingMode(.hierarchical)
-                }
-            }
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .background(
+        NavigationStack {
             ZStack {
-                RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                    .fill(.ultraThinMaterial)
+                // Background: your Aya gradient with a soft vignette
+                AyaBackground(style: .pink, vignette: true)
+                    .ignoresSafeArea()
 
-                RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                    .fill(LinearGradient(colors: [.white.opacity(0.18), .clear],
-                                         startPoint: .top, endPoint: .center))
-                    .blur(radius: 0.5)
+                // A subtle dark radial to help the bottom text read on bright areas
+                RadialGradient(colors: [.black.opacity(0.05), .black.opacity(0.35)],
+                               center: .bottomTrailing,
+                               startRadius: 40, endRadius: 520)
+                    .blendMode(.multiply)
+                    .ignoresSafeArea()
 
-                RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.28), lineWidth: 1)
+                VStack(alignment: .leading, spacing: 16) {
+                    Spacer() // push content to the bottom like the design
 
-                RoundedRectangle(cornerRadius: Style.Radius.button, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.0))
-                    .shadow(color: Color.white.opacity(0.18), radius: 14, x: 0, y: 6)
-                    .shadow(color: Style.Palette.accentPink.opacity(0.35), radius: 28, x: 0, y: 10)
+                    // Headline
+                    Text("Listen. Match.\nChat. Meet.")
+                        .font(.system(size: 35, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 2)
+
+                    // Sub-copy
+                    Text("Find love through senses. Whether you are looking for love, connection or just someone to vibe with – you are in the right place!")
+                        .font(.system(size: 18, weight: .regular, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.9))
+                        .lineSpacing(2)
+                        .shadow(color: .black.opacity(0.45), radius: 6, x: 0, y: 2)
+
+                    // CTA
+                    Button {
+                        goNext = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text("Get Started now")
+                                .font(.system(size: 28, weight: .regular, design: .rounded).italic())
+                            Image(systemName: "chevron.right")
+                                .font(.title3.weight(.semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        // make it feel like text on glass, very light
+                        .background(.ultraThinMaterial.opacity(0.12))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule().stroke(Color.white.opacity(0.35), lineWidth: 1)
+                        )
+                        .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 6)
+
+                    // Safe bottom space
+                    Spacer().frame(height: 22)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
             }
-        )
-        .opacity(isEnabled ? 1 : 0.6)
-        .scaleEffect(pressed ? 0.98 : 1)
-        .animation(.spring(response: 0.3, dampingFraction: 0.75), value: pressed)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in if !pressed { pressed = true } }
-                .onEnded { _ in pressed = false }
-        )
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel(Text(title))
+            .navigationDestination(isPresented: $goNext) {
+                // TODO: replace with your next screen (e.g., LoginView())
+                LoginView()
+            }
+            .preferredColorScheme(.dark)
+        }
     }
 }
+
 #Preview {
-    NavigationStack { OnboardingView() }
+    OnboardingLandingView()
 }
+
 
 
 

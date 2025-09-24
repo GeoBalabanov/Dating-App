@@ -10,6 +10,7 @@ import SwiftUI
 struct LoginView: View {
     // MARK: - State
     @State private var email: String = ""
+    @State private var goNext = false
     @State private var password: String = ""
     @State private var rememberMe = false
     @State private var showPassword = false
@@ -99,6 +100,7 @@ struct LoginView: View {
 
                 // Big italic CTA as text-like button
                 Button {
+                    goNext = true
                     // validate & sign in
                 } label: {
                     HStack(spacing: 6) {
@@ -109,6 +111,11 @@ struct LoginView: View {
                             .font(.title3.weight(.semibold))
                             .foregroundStyle(.white)
                             .offset(y: -1)
+                            .navigationDestination(isPresented: $goNext) {
+                                // TODO: replace with your next screen (e.g., LoginView())
+                                MatchProfileView()
+                                
+                            }
                     }
                 }
                 .buttonStyle(.plain)

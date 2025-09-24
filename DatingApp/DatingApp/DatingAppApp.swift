@@ -12,11 +12,12 @@ struct DatingAppApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                MessagingHomeView()
+                OnboardingLandingView()
                     .preferredColorScheme(.dark)
             }
         }
     }
 }
+
 
 
