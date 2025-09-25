@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 struct LoginView: View {
     // MARK: - State
     @State private var email: String = ""
