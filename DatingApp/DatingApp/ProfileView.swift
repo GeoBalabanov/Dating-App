@@ -210,6 +210,7 @@ struct ProfileView: View {
 
                     Spacer(minLength: 40)
                 }
+                .padding(.bottom, 16) // some breathing room above the bar
             }
         }
         // Avatar update
@@ -245,6 +246,75 @@ struct ProfileView: View {
         .alert("Error", isPresented: .constant(errorText != nil), actions: {
             Button("OK") { errorText = nil }
         }, message: { Text(errorText ?? "") })
+
+        // ✅ Bottom glassy nav bar integrated here
+        .safeAreaInset(edge: .bottom) {
+            BottomGlassyBar()
+        }
+    }
+
+    // MARK: Bottom Nav (glassy rounded box)
+    @ViewBuilder
+    private func BottomGlassyBar() -> some View {
+        HStack(spacing: 18) {
+            // Home (placeholder)
+            Button {
+                // TODO: navigate to your Home root
+            } label: {
+                NavIcon(system: "house.fill", label: "Home")
+            }
+            .buttonStyle(.plain)
+
+            // Chat -> MessagingHomeView
+            NavigationLink {
+                OnboardingView()   // Ensure this view exists in your project
+            } label: {
+                NavIcon(system: "bubble.left.and.bubble.right.fill", label: "Chat")
+            }
+            .buttonStyle(.plain)
+
+            // Profile (placeholder)
+            Button {
+                // TODO: navigate to profile
+            } label: {
+                NavIcon(system: "person.crop.circle", label: "Profile")
+            }
+            .buttonStyle(.plain)
+
+            // Settings (placeholder)
+            Button {
+                // TODO: navigate to settings
+            } label: {
+                NavIcon(system: "gearshape", label: "Settings")
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
+    }
+
+    private struct NavIcon: View {
+        let system: String
+        let label: String
+        var body: some View {
+            VStack(spacing: 6) {
+                Image(systemName: system)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
     }
 }
 
@@ -393,6 +463,7 @@ struct ProfileView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
+
 
 
 
