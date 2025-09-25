@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		390354B62E82DBE700C81B83 /* SpotifyiOS in Frameworks */ = {isa = PBXBuildFile; productRef = 390354B52E82DBE700C81B83 /* SpotifyiOS */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		80069D7A2E81B7D20092BF14 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -33,22 +29,9 @@
 		80069D832E81B7D20092BF14 /* DatingAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DatingAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		3973BD692E82A51900DB3822 /* Exceptions for "DatingApp" folder in "DatingApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 80069D6B2E81B7D10092BF14 /* DatingApp */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		80069D6E2E81B7D10092BF14 /* DatingApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				3973BD692E82A51900DB3822 /* Exceptions for "DatingApp" folder in "DatingApp" target */,
-			);
 			path = DatingApp;
 			sourceTree = "<group>";
 		};
@@ -69,7 +52,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				390354B62E82DBE700C81B83 /* SpotifyiOS in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -130,7 +112,6 @@
 			);
 			name = DatingApp;
 			packageProductDependencies = (
-				390354B52E82DBE700C81B83 /* SpotifyiOS */,
 			);
 			productName = DatingApp;
 			productReference = 80069D6C2E81B7D10092BF14 /* DatingApp.app */;
@@ -214,9 +195,6 @@
 			);
 			mainGroup = 80069D632E81B7D10092BF14;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				390354922E82D77D00C81B83 /* XCRemoteSwiftPackageReference "ios-sdk" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 80069D6D2E81B7D10092BF14 /* Products */;
 			projectDirPath = "";
@@ -419,11 +397,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9AZN8GL878;
+				DEVELOPMENT_TEAM = GHHUDBXB8K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = DatingApp/Info.plist;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -434,7 +410,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = zhanhristov.DatingApp;
+				PRODUCT_BUNDLE_IDENTIFIER = georgi.balabanov.DatingApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -449,11 +425,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9AZN8GL878;
+				DEVELOPMENT_TEAM = GHHUDBXB8K;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = DatingApp/Info.plist;
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -464,7 +438,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = zhanhristov.DatingApp;
+				PRODUCT_BUNDLE_IDENTIFIER = georgi.balabanov.DatingApp;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -584,25 +558,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		390354922E82D77D00C81B83 /* XCRemoteSwiftPackageReference "ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/spotify/ios-sdk";
-			requirement = {
-				branch = master;
-				kind = branch;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		390354B52E82DBE700C81B83 /* SpotifyiOS */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 390354922E82D77D00C81B83 /* XCRemoteSwiftPackageReference "ios-sdk" */;
-			productName = SpotifyiOS;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 80069D642E81B7D10092BF14 /* Project object */;
 }
