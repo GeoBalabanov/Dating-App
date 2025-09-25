@@ -95,7 +95,7 @@ struct SettingsView: View {
 
             // Chat -> OnboardingView (replace later if needed)
             NavigationLink {
-                OnboardingView()
+                MessagingHomeView()
             } label: {
                 NavIcon(system: "bubble.left.and.bubble.right.fill", label: "Chat")
             }

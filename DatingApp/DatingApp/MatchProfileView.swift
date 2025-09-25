@@ -92,9 +92,9 @@ struct MatchProfileView: View {
     @ViewBuilder
     private func BottomGlassyBar() -> some View {
         HStack(spacing: 18) {
-            // Home (placeholder)
-            Button {
-                // TODO: navigate to your Home root
+            // Home -> OnboardingView
+            NavigationLink {
+                OnboardingView()
             } label: {
                 NavIcon(system: "house.fill", label: "Home")
             }
@@ -108,17 +108,17 @@ struct MatchProfileView: View {
             }
             .buttonStyle(.plain)
 
-            // Profile (placeholder)
-            Button {
-                // TODO: navigate to profile
+            // Profile -> ProfileView
+            NavigationLink {
+                ProfileView()
             } label: {
                 NavIcon(system: "person.crop.circle", label: "Profile")
             }
             .buttonStyle(.plain)
 
-            // Settings (placeholder)
-            Button {
-                // TODO: navigate to settings
+            // Settings -> SettingsView
+            NavigationLink {
+                SettingsView()
             } label: {
                 NavIcon(system: "gearshape", label: "Settings")
             }
@@ -128,7 +128,10 @@ struct MatchProfileView: View {
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
         .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 8)
         .padding(.horizontal, 24)
         .padding(.bottom, 12)
@@ -151,6 +154,7 @@ struct MatchProfileView: View {
             .contentShape(Rectangle())
         }
     }
+
 
     // MARK: Actions
 
