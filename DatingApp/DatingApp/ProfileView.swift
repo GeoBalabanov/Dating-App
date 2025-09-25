@@ -60,7 +60,6 @@ struct ProfileView: View {
                             .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 2))
                             .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 8)
 
-                            // Edit -> Photos picker
                             PhotosPicker(selection: $selectedItem, matching: .images) {
                                 Image(systemName: "pencil.circle.fill")
                                     .font(.system(size: 28))
@@ -175,7 +174,7 @@ struct ProfileView: View {
                                             }
                                             Spacer()
                                             Button {
-                                                SpotifyRemote.shared.play(uri: t.uri) // full song in Spotify
+                                                SpotifyRemote.shared.play(uri: t.uri)
                                             } label: {
                                                 Image(systemName: "play.fill")
                                                     .font(.system(size: 16, weight: .bold))
@@ -210,7 +209,7 @@ struct ProfileView: View {
 
                     Spacer(minLength: 40)
                 }
-                .padding(.bottom, 16) // some breathing room above the bar
+                .padding(.bottom, 16) // space above the bottom bar
             }
         }
         // Avatar update
@@ -247,7 +246,7 @@ struct ProfileView: View {
             Button("OK") { errorText = nil }
         }, message: { Text(errorText ?? "") })
 
-        // ✅ Bottom glassy nav bar integrated here
+        // ✅ Bottom glassy nav bar
         .safeAreaInset(edge: .bottom) {
             BottomGlassyBar()
         }
@@ -257,33 +256,33 @@ struct ProfileView: View {
     @ViewBuilder
     private func BottomGlassyBar() -> some View {
         HStack(spacing: 18) {
-            // Home (placeholder)
-            Button {
-                // TODO: navigate to your Home root
+            // Home -> OnboardingView
+            NavigationLink {
+                OnboardingView()
             } label: {
                 NavIcon(system: "house.fill", label: "Home")
             }
             .buttonStyle(.plain)
 
-            // Chat -> MessagingHomeView
+            // Chat -> OnboardingView
             NavigationLink {
-                OnboardingView()   // Ensure this view exists in your project
+                OnboardingView()
             } label: {
                 NavIcon(system: "bubble.left.and.bubble.right.fill", label: "Chat")
             }
             .buttonStyle(.plain)
 
-            // Profile (placeholder)
-            Button {
-                // TODO: navigate to profile
+            // Profile -> ProfileView (pushes self on top)
+            NavigationLink {
+                ProfileView()
             } label: {
                 NavIcon(system: "person.crop.circle", label: "Profile")
             }
             .buttonStyle(.plain)
 
-            // Settings (placeholder)
-            Button {
-                // TODO: navigate to settings
+            // Settings -> SettingsView
+            NavigationLink {
+                SettingsView()
             } label: {
                 NavIcon(system: "gearshape", label: "Settings")
             }
@@ -293,7 +292,10 @@ struct ProfileView: View {
         .padding(.vertical, 10)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.white.opacity(0.18), lineWidth: 1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
         .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 8)
         .padding(.horizontal, 24)
         .padding(.bottom, 12)
@@ -389,7 +391,7 @@ final class VoiceIntroPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate 
     }
 }
 
-// MARK: - Spotify Search Sheet (adds tracks; full songs play via App Remote)
+// MARK: - Spotify Search Sheet
 
 struct SpotifySearchSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -453,7 +455,10 @@ struct SpotifySearchSheet: View {
     }
 }
 
-extension Notification.Name { static let didPickSpotifyTrack = Notification.Name("didPickSpotifyTrack") }
+// MARK: - Notification name (FILE SCOPE)
+extension Notification.Name {
+    static let didPickSpotifyTrack = Notification.Name("didPickSpotifyTrack")
+}
 
 // MARK: - Preview
 
@@ -463,7 +468,4 @@ struct ProfileView_Previews: PreviewProvider {
             .preferredColorScheme(.dark)
     }
 }
-
-
-
 
