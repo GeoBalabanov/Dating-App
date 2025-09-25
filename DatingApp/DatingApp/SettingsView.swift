@@ -75,10 +75,77 @@ struct SettingsView: View {
                 }
             }
         }
+        // ✅ attach the shared glassy bottom bar
+        .safeAreaInset(edge: .bottom) {
+            BottomGlassyBar()
+        }
+    }
+
+    // MARK: Shared Bottom Nav (glassy rounded box)
+    @ViewBuilder
+    private func BottomGlassyBar() -> some View {
+        HStack(spacing: 18) {
+            // Home -> OnboardingView
+            NavigationLink {
+                OnboardingView()
+            } label: {
+                NavIcon(system: "house.fill", label: "Home")
+            }
+            .buttonStyle(.plain)
+
+            // Chat -> OnboardingView (replace later if needed)
+            NavigationLink {
+                OnboardingView()
+            } label: {
+                NavIcon(system: "bubble.left.and.bubble.right.fill", label: "Chat")
+            }
+            .buttonStyle(.plain)
+
+            // Profile -> ProfileView
+            NavigationLink {
+                ProfileView()
+            } label: {
+                NavIcon(system: "person.crop.circle", label: "Profile")
+            }
+            .buttonStyle(.plain)
+
+            // Settings -> SettingsView (current screen; still allowed to push)
+            NavigationLink {
+                SettingsView()
+            } label: {
+                NavIcon(system: "gearshape", label: "Settings")
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
-            BottomBar(selected: .settings),
-            alignment: .bottom
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
         )
+        .shadow(color: .black.opacity(0.28), radius: 16, x: 0, y: 8)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 12)
+    }
+
+    private struct NavIcon: View {
+        let system: String
+        let label: String
+        var body: some View {
+            VStack(spacing: 6) {
+                Image(systemName: system)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                Text(label)
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
+        }
     }
 }
 
@@ -129,46 +196,6 @@ struct SettingsSection: View {
     }
 }
 
-// MARK: - Bottom Bar
-
-enum TabKind { case settings, home, profile }
-
-struct BottomBar: View {
-    var selected: TabKind
-
-    var body: some View {
-        HStack {
-            tab(icon: "gearshape", tab: .settings)
-            Spacer()
-            tab(icon: "house", tab: .home)
-            Spacer()
-            tab(icon: "person", tab: .profile)
-        }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(.white.opacity(0.08), lineWidth: 1)
-        )
-        .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-    }
-
-    @ViewBuilder
-    private func tab(icon: String, tab: TabKind) -> some View {
-        let isSelected = selected == tab
-        Image(systemName: icon + (isSelected ? ".fill" : ""))
-            .font(.system(size: 22, weight: .semibold))
-            .foregroundStyle(isSelected ? .white : .white.opacity(0.55))
-            .frame(width: 44, height: 44)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                // Hook up navigation to other tabs here if you use TabView/Router.
-            }
-    }
-}
-
 // MARK: - Placeholder screen for links
 
 struct PlaceholderScreen: View {
@@ -184,7 +211,7 @@ struct PlaceholderScreen: View {
     }
 }
 
-// MARK: - Preview / App entry
+// MARK: - Preview
 
 struct SettingsView_Previews: PreviewProvider {
     static var previews: some View {
