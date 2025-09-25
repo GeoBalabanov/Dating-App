@@ -13,11 +13,11 @@ struct DatingAppApp: App {
         WindowGroup {
             NavigationStack {
                 OnboardingLandingView()
-                    .preferredColorScheme(.dark)
+            }
+            .preferredColorScheme(.dark)
+            .onOpenURL { url in
+                SpotifyRemote.shared.handleCallbackURL(url)
             }
         }
     }
 }
-
-
-
