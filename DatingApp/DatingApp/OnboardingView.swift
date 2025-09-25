@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct OnboardingLandingView: View {
+struct OnboardingView: View {
     @State private var goNext = false
 
     var body: some View {
@@ -80,7 +80,7 @@ struct OnboardingLandingView: View {
 }
 
 #Preview {
-    OnboardingLandingView()
+    OnboardingView()
 }
 
 

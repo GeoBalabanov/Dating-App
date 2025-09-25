@@ -7,6 +7,8 @@
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>spotify-callback</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>datingapp://spotify-callback</string>
@@ -15,7 +17,9 @@
 	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
-		<string></string>
+		<string>spotify</string>
+		<string>spotify-sdk</string>
+		<string>spotify-auth</string>
 	</array>
 </dict>
 </plist>
